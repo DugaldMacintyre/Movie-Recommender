@@ -7,7 +7,7 @@
 
 .DS_Store
 __pycache__/
-flask_session/
+*flask_session/*
 
 .ipynb_checkpoints
 */.ipynb_checkpoints/*

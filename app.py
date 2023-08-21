@@ -5,7 +5,11 @@ from flask import Flask, flash, redirect, render_template, request, session
 from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from helpers import apology, login_required
+from helpers import apology, login_required, improved_recommendations, MovieNotFoundError
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+import pandas as pd
+from sklearn.metrics.pairwise import linear_kernel
 
 # Configure application
 app = Flask(__name__)
@@ -142,5 +146,39 @@ def register():
 
     else:
         return render_template("register.html")
+    
 
+def initialize_global_variables():
+    global C, title, md, cosine_sim, indices, m
+    
+    # Load the cleaned movie data from CSV file
+    md = pd.read_csv('data/cleaned_data.csv')
+    
+    # Calculate C and m for weighted rating
+    vote_counts = md[md['vote_count'].notnull()]['vote_count'].astype('int')
+    vote_averages = md[md['vote_average'].notnull()]['vote_average'].astype('int')
+    C = vote_averages.mean()
+    m = vote_counts.quantile(0.95)
+    
+    # Calculate the cosine similarity matrix
+    tf = TfidfVectorizer(analyzer='word', ngram_range=(1, 2), min_df=0, stop_words='english')
+    tfidf_matrix = tf.fit_transform(md['soup'])
+    cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
+    
+    # Create a Series of movie indices
+    indices = pd.Series(md.index, index=md['title'])
+    return
 
+initialize_global_variables()
+
+@app.route("/recommendations", methods=["GET", "POST"])
+def recommendations():
+    title = request.form.get('movie')
+
+    try:
+        recommended_movies_df = improved_recommendations(C, title, md, cosine_sim, indices, m)
+    except MovieNotFoundError as e:
+        return render_template('index.html', error_message=str(e))
+
+    recommended_movies_list = recommended_movies_df.to_dict('records')
+    return render_template('index.html', recommended_movies=recommended_movies_list)

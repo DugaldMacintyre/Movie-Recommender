@@ -6,7 +6,7 @@
 
 {% block main %}
     <!-- Main -->
-    <div class="container d-flex justify-content-center align-items-center min-vh-100">
+    <div class="container d-flex justify-content-center align-items-center container-content">
         <!-- Login -->
         <div class="row border p-3 bg-white shadow box-area">
           <!-- Left -->
@@ -35,7 +35,7 @@
                         <div class="col-lg-4">
                             <button class="btn btn-outline-primary btn-curved" type="submit">Log In</button>
                         </div>
-                        <div class="col-lg-8 col-12 mt-xs-3 mt-md-3 mt-lg-0 d-flex justify-content-center align-items-center">
+                        <div class="col-lg-8 mt-lg-0 d-flex align-items-center register-text">
                             <small class="text-muted">Don't have an account? <a href="/register">Register</a></small>
                         </div>
                     </div>
@@ -46,13 +46,3 @@
       </div>
       
 {% endblock %}
-
-<!-- <form action="/login" method="post">
-    <div class="mb-3">
-        <input autocomplete="off" autofocus class="form-control mx-auto w-auto" id="username" name="username" placeholder="Username" type="text" required>
-    </div>
-    <div class="mb-3">
-        <input class="form-control mx-auto w-auto" id="password" name="password" placeholder="Password" type="password" required>
-    </div>
-    <button class="btn btn-outline-primary mx-2 btn-curved" type="submit">Log In</button>
-</form> -->
