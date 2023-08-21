@@ -5,6 +5,10 @@
 # gitignore template for Jupyter Notebooks
 # website: http://jupyter.org/
 
+.DS_Store
+__pycache__/
+flask_session/
+
 .ipynb_checkpoints
 */.ipynb_checkpoints/*
 

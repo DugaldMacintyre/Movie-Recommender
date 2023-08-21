@@ -1,11 +1,18 @@
-/* Size for brand */
-nav .navbar-brand
-{
-    font-size: xx-large;
+@import url('https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Lato:wght@300&family=Poppins&family=Sora:wght@300&display=swap');
+
+
+body {
+    font-family: 'Poppins', sans-serif;
 }
 
+/* Size for brand */
+/* nav .navbar-brand
+{
+    font-size: xx-large;
+} */
+
 /* Colors for brand */
-nav .navbar-brand .blue
+/* nav .navbar-brand .blue
 {
     color: #537fbe;
 }
@@ -44,3 +51,38 @@ nav .navbar-brand .green
     padding: 0.75rem;
     vertical-align: middle;
 }
+ */
+
+
+/* Form Container */
+.box-area {
+    width: 930px;
+    border-radius: 15px;
+}
+
+/* Right Box */
+.right-box {
+    padding: 40px 30px 40px 40px;
+}
+
+
+/* Custom Placeholder */
+::placeholder {
+    font-size: 16px;
+}
+
+/* For small screens */
+@media only screen and (max-width: 768px) {
+    .box-area {
+        margin: 0 10px;
+    }
+
+    .left-box {
+        height: 100px;
+        overflow: hidden;
+    }
+
+    .right-box {
+        padding: 20px;
+    }
+}   
