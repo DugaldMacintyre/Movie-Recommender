@@ -5,16 +5,58 @@
 {% endblock %}
 
 {% block main %}
-    <form action="/register" method="post">
+    <!-- Main -->
+    <div class="container d-flex justify-content-center align-items-center min-vh-100">
+        <!-- Login -->
+        <div class="row border p-3 bg-white shadow box-area">
+          <!-- Left -->
+          <div class="col-md-6 d-flex justify-content-center align-items-center flex-column left-box">
+            <div class="featured-image mb-3">
+                <img class="img-fluid" style="border-radius: 12px;"src="https://images.unsplash.com/photo-1485846234645-a62644f84728?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2918&q=80" title="{{ top }}">
+            </div>
+            <!-- <p class="text-black fs-2">Be Verified</p>
+            <small class="text-black text-wrap text-center">Join experienced designers on this platform</small> -->
+          </div>
+          <!-- Right -->
+          <div class="col-md-6 right-box">
+            <div class="row align-items-center">
+                <div class="header-text mb-4">
+                    <h2>Welcome</h2>
+                    <p>We are looking forward to having you!</p>
+                </div>
+                <form action="/login" method="post">
+                    <div class="input-group mb-3">
+                        <input autocomplete="off" autofocus class="form-control form-control-lg bg-light fs-6 mx-auto w-auto" id="username" name="username" placeholder="Username" type="text" required>
+                    </div>
+                    <div class="input-group mb-3">
+                        <input class="form-control form-control-lg bg-light fs-6 mx-auto w-auto" id="password" name="password" placeholder="Password" type="password" required>
+                    </div>
+                    <div class="input-group mb-4">
+                        <input class="form-control form-control-lg bg-light fs-6 mx-auto w-auto" id="password" name="confirmation" placeholder="Re-enter password" type="password" required>
+                    </div>
+                    <button class="btn btn-primary btn-curved" type="submit">Log In</button>
+                </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+{% endblock %}
+
+
+
+
+
+      <form action="/register" method="post">
         <div class="mb-3">
-            <input autocomplete="off" autofocus class="form-control mx-auto w-auto" id="username" name="username" placeholder="Username" type="text">
+            <input autocomplete="off" autofocus class="form-control mx-auto w-auto" id="username" name="username" placeholder="Username" type="text" required>
         </div>
         <div class="mb-3">
-            <input class="form-control mx-auto w-auto" id="password" name="password" placeholder="Password" type="password">
+            <input class="form-control mx-auto w-auto" id="password" name="password" placeholder="Password" type="password" required>
         </div>
         <div class="mb-3">
-            <input class="form-control mx-auto w-auto" id="password" name="confirmation" placeholder="Re-enter password" type="password">
+            <input class="form-control mx-auto w-auto" id="password" name="confirmation" placeholder="Re-enter password" type="password" required>
+            <div id="emailHelp" class="form-text">Password must be minimum 5 characters long and have at least 1 digit and 1 special character.</div>
         </div>
         <button class="btn btn-primary" type="submit">Log In</button>
     </form>
-{% endblock %}
