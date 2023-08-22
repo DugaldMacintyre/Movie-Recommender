@@ -40,6 +40,48 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+CONFIG_PATTERN = 'http://api.themoviedb.org/3/configuration?api_key={key}'
+IMG_PATTERN = 'http://api.themoviedb.org/3/movie/{imdbid}/images?api_key={key}' 
+KEY = '99dd504960661c614f0547d8575cdb64'
+
+def _get_json(url):
+    r = requests.get(url)
+    return r.json()
+
+def get_poster_urls(imdbid):
+    """ return image urls of posters for IMDB id
+        returns all poster images from 'themoviedb.org'. Uses the
+        maximum available size. 
+        Args:
+            imdbid (str): IMDB id of the movie
+        Returns:
+            list: list of urls to the images
+    """
+    config = _get_json(CONFIG_PATTERN.format(key=KEY))
+    print (config)
+    base_url = config['images']['base_url']
+    print (base_url)
+    sizes = config['images']['poster_sizes']
+    print (sizes)
+
+    """
+        'sizes' should be sorted in ascending order, so
+            max_size = sizes[-1]
+        should get the largest size as well.        
+    """
+    def size_str_to_int(x):
+        return float("inf") if x == 'original' else int(x[1:])
+    max_size = max(sizes, key=size_str_to_int)
+
+    posters = _get_json(IMG_PATTERN.format(key=KEY,imdbid=imdbid))['posters']
+    poster_urls = []
+    for poster in posters:
+        rel_path = poster['file_path']
+        url = "{0}{1}{2}".format(base_url, max_size, rel_path)
+        poster_urls.append(url) 
+
+    return poster_urls
+
 def weighted_rating(x, m, C):
     v = x['vote_count']
     R = x['vote_average']
@@ -63,7 +105,8 @@ def get_similar_movies(idx, cosine_sim):
     return movie_indices
 
 def filter_qualified_movies(movie_indices, md, m):
-    movies = md.iloc[movie_indices][['title', 'vote_count', 'vote_average', 'year']]
+    movies = md.iloc[movie_indices][['title', 'vote_count', 'vote_average', 'year', 'imdb_id']]
+    movies['poster_url'] = movies['imdb_id'].apply(lambda row: get_poster_urls(row)[0])
     vote_counts = movies[movies['vote_count'].notnull()]['vote_count'].astype('int')
     m = vote_counts.quantile(0.60)
     qualified = movies[(movies['vote_count'] >= m) & (movies['vote_count'].notnull()) & (movies['vote_average'].notnull())]

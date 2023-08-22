@@ -25,17 +25,35 @@
             <div class="row mt-3">
                 <div class="col">
                     <h2>Recommended Movies</h2>
-
-                    <ul class="list-group">
-                        {% for movie in recommended_movies %}
-                        <li class="list-group-item">{{ movie.title }} (Vote Count: {{ movie.vote_count }}, Vote Average: {{ movie.vote_average }})</li>
-                        {% endfor %}
-                    </ul>
+                    <div id="movieCarousel" class="carousel slide" data-ride="carousel">
+                        <div class="carousel-inner">
+                            <!-- Generate carousel slides from recommended_movies dictionary -->
+                            {% for movie in recommended_movies %}
+                            <div class="carousel-item {% if loop.index == 1 %}active{% endif %}">
+                                <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="d-block w-100">
+                                <div class="carousel-caption">
+                                    <h3>{{ movie.title }}</h3>
+                                    <p>{{ movie.description }}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Carousel controls -->
+                        <a class="carousel-control-prev" href="#movieCarousel" data-slide="prev">
+                            <span class="carousel-control-prev-icon"></span>
+                        </a>
+                        <a class="carousel-control-next" href="#movieCarousel" data-slide="next">
+                            <span class="carousel-control-next-icon"></span>
+                        </a>
+                    </div>
                 </div>
             </div>
             {% endif %}
         </div>
 
-
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     </div>
 {% endblock %}
