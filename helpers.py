@@ -58,11 +58,8 @@ def get_poster_urls(imdbid):
             list: list of urls to the images
     """
     config = _get_json(CONFIG_PATTERN.format(key=KEY))
-    print (config)
     base_url = config['images']['base_url']
-    print (base_url)
     sizes = config['images']['poster_sizes']
-    print (sizes)
 
     """
         'sizes' should be sorted in ascending order, so
@@ -73,12 +70,14 @@ def get_poster_urls(imdbid):
         return float("inf") if x == 'original' else int(x[1:])
     max_size = max(sizes, key=size_str_to_int)
 
-    posters = _get_json(IMG_PATTERN.format(key=KEY,imdbid=imdbid))['posters']
+    posters = _get_json(IMG_PATTERN.format(key=KEY,imdbid=imdbid,iso_639_1='en'))['posters']
     poster_urls = []
     for poster in posters:
-        rel_path = poster['file_path']
-        url = "{0}{1}{2}".format(base_url, max_size, rel_path)
-        poster_urls.append(url) 
+        iso_639_1 = poster["iso_639_1"]
+        if iso_639_1 == "en":
+            rel_path = poster['file_path']
+            url = "{0}{1}{2}".format(base_url, max_size, rel_path)
+            poster_urls.append(url) 
 
     return poster_urls
 
@@ -106,7 +105,6 @@ def get_similar_movies(idx, cosine_sim):
 
 def filter_qualified_movies(movie_indices, md, m):
     movies = md.iloc[movie_indices][['title', 'vote_count', 'vote_average', 'year', 'imdb_id']]
-    movies['poster_url'] = movies['imdb_id'].apply(lambda row: get_poster_urls(row)[0])
     vote_counts = movies[movies['vote_count'].notnull()]['vote_count'].astype('int')
     m = vote_counts.quantile(0.60)
     qualified = movies[(movies['vote_count'] >= m) & (movies['vote_count'].notnull()) & (movies['vote_average'].notnull())]
@@ -120,4 +118,5 @@ def improved_recommendations(C, title, md, cosine_sim, indices, m):
     qualified['vote_average'] = qualified['vote_average'].astype('int')
     qualified['wr'] = qualified.apply(weighted_rating, args=(m, C), axis=1)
     qualified = qualified.sort_values('wr', ascending=False).head(5)
+    qualified['poster_url'] = qualified['imdb_id'].apply(lambda row: get_poster_urls(row)[0])
     return qualified

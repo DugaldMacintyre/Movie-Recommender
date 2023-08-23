@@ -31,10 +31,6 @@
                             {% for movie in recommended_movies %}
                             <div class="carousel-item {% if loop.index == 1 %}active{% endif %}">
                                 <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="d-block w-100">
-                                <div class="carousel-caption">
-                                    <h3>{{ movie.title }}</h3>
-                                    <p>{{ movie.description }}</p>
-                                </div>
                             </div>
                             {% endfor %}
                         </div>
