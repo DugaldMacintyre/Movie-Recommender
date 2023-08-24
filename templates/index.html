@@ -15,10 +15,23 @@
                     <div class="header-text mb-4">
                         <h2>Recommendations?</h2>
                     </div>
-                    <form action="/recommendations" method="post">
+                    <form action="{% if not error %} /recommendations {% else %} /recommendationsid{% endif %}" method="post">
+
+                        {% if not error %}
                         <div class="input-group mb-3">
                             <input autocomplete="off" autofocus class="form-control form-control-lg bg-light fs-6 mx-auto w-auto" id="movie" name="movie" placeholder="Movie Name" type="text" required>
                         </div>
+                        {% else %}
+                            <div class="input-group mb-3">
+                                <select id="inputState" class="form-select" id="movie" name="movie">
+                                    <option selected>Choose...</option>
+                                    {% for movie in recommended_movies %}
+                                        <option value="{{ movie.imdb_id }}">{{movie.display_title}} - {{movie.release_date}}</option>
+                                    {% endfor %}
+                                  </select>
+                            </div>
+                        {% endif %}
+
                         <div class="col-lg-4">
                             <button class="btn btn-outline-primary btn-curved" type="submit">Submit</button>
                         </div>
@@ -30,7 +43,7 @@
             </div>
             <!-- Right -->
             <div class="col-md-6 d-flex justify-content-center align-items-center flex-column left-box">
-                {% if recommended_movies %}
+                {% if recommended_movies and not error%}
                     <div class="row mt-3">
                         <div class="col">
                             <div id="movieCarousel" class="carousel slide" data-ride="carousel">
@@ -42,7 +55,7 @@
                                     </div>
                                     {% endfor %}
                                 </div>
-                                
+                                <!-- #2596be -->
                                 <!-- Carousel controls -->
                                 <a class="carousel-control-prev" href="#movieCarousel" data-slide="prev">
                                     <span class="carousel-control-prev-icon"></span>

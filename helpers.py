@@ -70,14 +70,24 @@ def get_poster_urls(imdbid):
         return float("inf") if x == 'original' else int(x[1:])
     max_size = max(sizes, key=size_str_to_int)
 
-    posters = _get_json(IMG_PATTERN.format(key=KEY,imdbid=imdbid,iso_639_1='en'))['posters']
+    posters = _get_json(IMG_PATTERN.format(key=KEY,imdbid=imdbid))['posters']
     poster_urls = []
+    has_english_poster = False
+
     for poster in posters:
         iso_639_1 = poster["iso_639_1"]
         if iso_639_1 == "en":
             rel_path = poster['file_path']
             url = "{0}{1}{2}".format(base_url, max_size, rel_path)
-            poster_urls.append(url) 
+            poster_urls.append(url)
+            has_english_poster = True
+
+    # If there's no English poster, use the first one (if available)
+    if not has_english_poster and posters:
+        for poster in posters:
+            rel_path = posters[0]['file_path']
+            url = "{0}{1}{2}".format(base_url, max_size, rel_path)
+            poster_urls.append(url)
 
     return poster_urls
 
@@ -87,14 +97,17 @@ def weighted_rating(x, m, C):
     return (v/(v+m) * R) + (m/(m+v) * C)
 
 def get_movie_indices(title, indices):
+    error_flag = False
     try:
         idx = indices[title]
     except KeyError:
         raise MovieNotFoundError("Movie title not found. Please enter another film")
-    
+
     if isinstance(idx, pd.Series):
-        idx = idx.iloc[0]  # Make selection user defined when frontend implemented
-    return idx
+        error_flag = True
+        return idx, error_flag
+
+    return idx, error_flag
 
 def get_similar_movies(idx, cosine_sim):
     sim_scores = list(enumerate(cosine_sim[idx]))
@@ -104,14 +117,18 @@ def get_similar_movies(idx, cosine_sim):
     return movie_indices
 
 def filter_qualified_movies(movie_indices, md, m):
-    movies = md.iloc[movie_indices][['title', 'vote_count', 'vote_average', 'year', 'imdb_id']]
+    movies = md.iloc[movie_indices][['title', 'vote_count', 'vote_average', 'year', 'imdb_id', 'display_title']]
     vote_counts = movies[movies['vote_count'].notnull()]['vote_count'].astype('int')
     m = vote_counts.quantile(0.60)
     qualified = movies[(movies['vote_count'] >= m) & (movies['vote_count'].notnull()) & (movies['vote_average'].notnull())]
     return qualified
 
 def improved_recommendations(C, title, md, cosine_sim, indices, m):
-    idx = get_movie_indices(title, indices)
+    idx, error_flag = get_movie_indices(title, indices)
+
+    if error_flag:
+        return md[md['title'] == title], error_flag
+    
     movie_indices = get_similar_movies(idx, cosine_sim)
     qualified = filter_qualified_movies(movie_indices, md, m)
     qualified['vote_count'] = qualified['vote_count'].astype('int')
@@ -119,4 +136,4 @@ def improved_recommendations(C, title, md, cosine_sim, indices, m):
     qualified['wr'] = qualified.apply(weighted_rating, args=(m, C), axis=1)
     qualified = qualified.sort_values('wr', ascending=False).head(5)
     qualified['poster_url'] = qualified['imdb_id'].apply(lambda row: get_poster_urls(row)[0])
-    return qualified
+    return qualified, error_flag

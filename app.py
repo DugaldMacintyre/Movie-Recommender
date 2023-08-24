@@ -1,4 +1,6 @@
 import os
+import string
+import re
 
 from cs50 import SQL
 from flask import Flask, flash, redirect, render_template, request, session
@@ -175,10 +177,28 @@ initialize_global_variables()
 def recommendations():
     title = request.form.get('movie')
 
+    title = title.translate(str.maketrans('', '', string.punctuation))
+    title = title.replace(" ", "")
+    title = title.lower()
+
     try:
-        recommended_movies_df = improved_recommendations(C, title, md, cosine_sim, indices, m)
+        recommended_movies_df, error_flag = improved_recommendations(C, title, md, cosine_sim, indices, m)
     except MovieNotFoundError as e:
         return render_template('index.html', error_message=str(e))
-
+    
     recommended_movies_list = recommended_movies_df.to_dict('records')
-    return render_template('index.html', recommended_movies=recommended_movies_list)
+    return render_template('index.html', recommended_movies=recommended_movies_list, error=error_flag)
+
+@app.route("/recommendationsid", methods=["GET", "POST"])
+def recommendations_id():
+    title = request.form.get('movie')
+
+    indices = pd.Series(md.index, index=md['imdb_id'])
+
+    try:
+        recommended_movies_df, error_flag = improved_recommendations(C, title, md, cosine_sim, indices, m)
+    except MovieNotFoundError as e:
+        return render_template('index.html', error_message=str(e))
+    
+    recommended_movies_list = recommended_movies_df.to_dict('records')
+    return render_template('index.html', recommended_movies=recommended_movies_list, error=error_flag)
