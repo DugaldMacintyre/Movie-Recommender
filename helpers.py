@@ -1,6 +1,8 @@
 import os
 import requests
 import urllib.parse
+from sklearn.metrics.pairwise import cosine_similarity 
+import numpy as np
 
 from flask import redirect, render_template, request, session
 from functools import wraps
@@ -109,8 +111,11 @@ def get_movie_indices(title, indices):
 
     return idx, error_flag
 
-def get_similar_movies(idx, cosine_sim):
-    sim_scores = list(enumerate(cosine_sim[idx]))
+def get_similar_movies(idx, md_numeric, cosine_sim):
+    cosine_sim_numeric = cosine_similarity(np.array(md_numeric.iloc[idx]).reshape((1, -1)), md_numeric).reshape(-1)
+    combined_scores = cosine_sim[idx] + cosine_sim_numeric
+
+    sim_scores = list(enumerate(combined_scores))
     sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
     sim_scores = sim_scores[1:26]
     movie_indices = [i[0] for i in sim_scores]
@@ -123,13 +128,13 @@ def filter_qualified_movies(movie_indices, md, m):
     qualified = movies[(movies['vote_count'] >= m) & (movies['vote_count'].notnull()) & (movies['vote_average'].notnull())]
     return qualified
 
-def improved_recommendations(C, title, md, cosine_sim, indices, m):
+def improved_recommendations(C, title, md, md_numeric, cosine_sim, indices, m):
     idx, error_flag = get_movie_indices(title, indices)
 
     if error_flag:
         return md[md['title'] == title], error_flag
     
-    movie_indices = get_similar_movies(idx, cosine_sim)
+    movie_indices = get_similar_movies(idx, md_numeric, cosine_sim)
     qualified = filter_qualified_movies(movie_indices, md, m)
     qualified['vote_count'] = qualified['vote_count'].astype('int')
     qualified['vote_average'] = qualified['vote_average'].astype('int')

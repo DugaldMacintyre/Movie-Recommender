@@ -151,10 +151,15 @@ def register():
     
 
 def initialize_global_variables():
-    global C, title, md, cosine_sim, indices, m
+    global C, title, md, md_numeric, cosine_sim, cosine_sim_numeric, indices, m
     
     # Load the cleaned movie data from CSV file
     md = pd.read_csv('data/cleaned_data.csv')
+
+    md_numeric = md[['budget', 'popularity', 'revenue', 'runtime', 'Action', 'Adventure', 'Animation',
+       'Comedy', 'Crime', 'Documentary', 'Drama', 'Family', 'Fantasy',
+       'Foreign', 'History', 'Horror', 'Music', 'Mystery', 'Romance',
+       'Science Fiction', 'TV Movie', 'Thriller', 'War', 'Western', 'series_count']]
     
     # Calculate C and m for weighted rating
     vote_counts = md[md['vote_count'].notnull()]['vote_count'].astype('int')
@@ -166,7 +171,7 @@ def initialize_global_variables():
     tf = TfidfVectorizer(analyzer='word', ngram_range=(1, 2), min_df=0, stop_words='english')
     tfidf_matrix = tf.fit_transform(md['soup'])
     cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
-    
+
     # Create a Series of movie indices
     indices = pd.Series(md.index, index=md['title'])
     return
@@ -182,7 +187,7 @@ def recommendations():
     title = title.lower()
 
     try:
-        recommended_movies_df, error_flag = improved_recommendations(C, title, md, cosine_sim, indices, m)
+        recommended_movies_df, error_flag = improved_recommendations(C, title, md, md_numeric, cosine_sim, indices, m)
     except MovieNotFoundError as e:
         return render_template('index.html', error_message=str(e))
     
@@ -196,7 +201,7 @@ def recommendations_id():
     indices = pd.Series(md.index, index=md['imdb_id'])
 
     try:
-        recommended_movies_df, error_flag = improved_recommendations(C, title, md, cosine_sim, indices, m)
+        recommended_movies_df, error_flag = improved_recommendations(C, title, md, md_numeric, cosine_sim, indices, m)
     except MovieNotFoundError as e:
         return render_template('index.html', error_message=str(e))
     
