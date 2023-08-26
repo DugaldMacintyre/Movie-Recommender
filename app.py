@@ -7,11 +7,12 @@ from flask import Flask, flash, redirect, render_template, request, session
 from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from helpers import apology, login_required, improved_recommendations, MovieNotFoundError
+from helpers import apology, login_required, get_recommendations, MovieNotFoundError
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 import pandas as pd
 from sklearn.metrics.pairwise import linear_kernel
+
 
 # Configure application
 app = Flask(__name__)
@@ -180,14 +181,13 @@ initialize_global_variables()
 
 @app.route("/recommendations", methods=["GET", "POST"])
 def recommendations():
-    title = request.form.get('movie')
 
-    title = title.translate(str.maketrans('', '', string.punctuation))
-    title = title.replace(" ", "")
-    title = title.lower()
+    movie_input = request.form.get('movie')
+    titles = [title.strip().lower().translate(str.maketrans('', '', string.punctuation)).replace(" ", "") for title in movie_input.split(',')]
+
 
     try:
-        recommended_movies_df, error_flag = improved_recommendations(C, title, md, md_numeric, cosine_sim, indices, m)
+        recommended_movies_df, error_flag = get_recommendations(C, titles, md, cosine_sim, indices, m)
     except MovieNotFoundError as e:
         return render_template('index.html', error_message=str(e))
     
@@ -196,12 +196,12 @@ def recommendations():
 
 @app.route("/recommendationsid", methods=["GET", "POST"])
 def recommendations_id():
-    title = request.form.get('movie')
+    titles = request.form.get('movie')
 
     indices = pd.Series(md.index, index=md['imdb_id'])
 
     try:
-        recommended_movies_df, error_flag = improved_recommendations(C, title, md, md_numeric, cosine_sim, indices, m)
+        recommended_movies_df, error_flag = get_recommendations(C, [titles], md, cosine_sim, indices, m)
     except MovieNotFoundError as e:
         return render_template('index.html', error_message=str(e))
     

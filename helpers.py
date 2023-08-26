@@ -98,47 +98,76 @@ def weighted_rating(x, m, C):
     R = x['vote_average']
     return (v/(v+m) * R) + (m/(m+v) * C)
 
-def get_movie_indices(title, indices):
+def get_movie_indices(titles, indices):
     error_flag = False
-    try:
-        idx = indices[title]
-    except KeyError:
-        raise MovieNotFoundError("Movie title not found. Please enter another film")
+    idxs = []
+    index = 0
+    for i, title in enumerate(titles):
+        try:
+            idx = indices[title]
+        except KeyError:
+            raise MovieNotFoundError("Movie title not found. Please enter another film")
 
-    if isinstance(idx, pd.Series):
-        error_flag = True
-        return idx, error_flag
+        if isinstance(idx, pd.Series):
+            error_flag = True
+            index = i
+            return idx, error_flag, index
 
-    return idx, error_flag
+        idxs.append(idx)
 
-def get_similar_movies(idx, md_numeric, cosine_sim):
+    return idxs, error_flag, index
+
+def get_scores(idx, md_numeric, cosine_sim):
+
     cosine_sim_numeric = cosine_similarity(np.array(md_numeric.iloc[idx]).reshape((1, -1)), md_numeric).reshape(-1)
-    combined_scores = cosine_sim[idx] + cosine_sim_numeric
 
-    sim_scores = list(enumerate(combined_scores))
-    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
-    sim_scores = sim_scores[1:26]
-    movie_indices = [i[0] for i in sim_scores]
-    return movie_indices
+    # Normalize the scores
+    normalized_numeric = (cosine_sim_numeric - min(cosine_sim_numeric)) / (max(cosine_sim_numeric) - min(cosine_sim_numeric))
+    normalized_soup = (cosine_sim[idx] - min(cosine_sim[idx])) / (max(cosine_sim[idx]) - min(cosine_sim[idx]))
 
-def filter_qualified_movies(movie_indices, md, m):
-    movies = md.iloc[movie_indices][['title', 'vote_count', 'vote_average', 'year', 'imdb_id', 'display_title']]
+    # Combine the normalized scores with equal weight
+    combined_scores = 0.5 * (normalized_numeric + normalized_soup)
+
+    return combined_scores
+
+def get_all_scores(idxs, md, cosine_sim):
+    scores = pd.DataFrame()
+
+    md_numeric = md[['budget', 'popularity', 'revenue', 'runtime', 'Action', 'Adventure', 'Animation',
+       'Comedy', 'Crime', 'Documentary', 'Drama', 'Family', 'Fantasy',
+       'Foreign', 'History', 'Horror', 'Music', 'Mystery', 'Romance',
+       'Science Fiction', 'TV Movie', 'Thriller', 'War', 'Western', 'series_count']]
+
+    for i, idx in enumerate(idxs):
+        combined_scores = get_scores(idx, md_numeric, cosine_sim)
+        scores['score_{i}'.format(i=i)] = combined_scores
+
+    return scores
+
+def filter_qualified_movies(md, m):
+    movies = md[['title', 'average_score', 'vote_count', 'vote_average', 'year', 'imdb_id', 'display_title']]
     vote_counts = movies[movies['vote_count'].notnull()]['vote_count'].astype('int')
     m = vote_counts.quantile(0.60)
     qualified = movies[(movies['vote_count'] >= m) & (movies['vote_count'].notnull()) & (movies['vote_average'].notnull())]
     return qualified
 
-def improved_recommendations(C, title, md, md_numeric, cosine_sim, indices, m):
-    idx, error_flag = get_movie_indices(title, indices)
-
-    if error_flag:
-        return md[md['title'] == title], error_flag
-    
-    movie_indices = get_similar_movies(idx, md_numeric, cosine_sim)
-    qualified = filter_qualified_movies(movie_indices, md, m)
-    qualified['vote_count'] = qualified['vote_count'].astype('int')
-    qualified['vote_average'] = qualified['vote_average'].astype('int')
+def sort_weighted(qualified, C, m):
     qualified['wr'] = qualified.apply(weighted_rating, args=(m, C), axis=1)
-    qualified = qualified.sort_values('wr', ascending=False).head(5)
-    qualified['poster_url'] = qualified['imdb_id'].apply(lambda row: get_poster_urls(row)[0])
-    return qualified, error_flag
+
+    sorted_average = qualified.sort_values('average_score', ascending=False)[:25]
+    sorted_qualified = sorted_average.sort_values('wr', ascending=False)
+
+    return sorted_qualified
+    
+def get_recommendations(C, titles, md, cosine_sim, indices, m):
+    idxs, error_flag, index = get_movie_indices(titles, indices)
+    if error_flag:
+        return md[md['title'] == titles[index]], error_flag
+    scores = get_all_scores(idxs, md, cosine_sim)
+    md['average_score'] = scores.mean(axis=1)
+    qualified = filter_qualified_movies(md, m)
+    sorted_qualified = sort_weighted(qualified, C, m)
+    sorted_qualified = sorted_qualified.drop(idxs)
+    sorted_qualified['poster_url'] = sorted_qualified['imdb_id'].apply(lambda row: get_poster_urls(row)[0])
+    return sorted_qualified.head(5), error_flag
+    
