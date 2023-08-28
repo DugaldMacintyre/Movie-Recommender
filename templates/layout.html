@@ -22,6 +22,8 @@
   </head>
 
   <body>
+
+    <!-- TODO: FIX NAV TO DEAL SMALLER SCREENS-->
     <nav class="navbar navbar-expand-lg navbar-light">
       <div class="navbar-collapse justify-content-end" id="navbar">
         <div
@@ -43,17 +45,17 @@
               />
             </svg>
           </a>
-          <ul class="navbar-nav ml-auto d-flex align-items-center">
+          <ul class="navbar-nav ml-auto d-flex align-items-center flex-nowrap">
             {% if session["user_id"] %}
             <li class="nav-item">
-              <a href="" class="btn btn-link mx-2"
+              <a href="recommender" class="btn btn-link mx-2"
               
                 >Movie Recommender</a
               >
             </li>
 
             <li class="nav-item">
-              <a href="" class="btn btn-link mx-2"
+              <a href="/library" class="btn btn-link mx-2"
                 >My Library</a
               >
             </li>

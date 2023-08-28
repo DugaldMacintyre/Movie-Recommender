@@ -6,8 +6,9 @@ from cs50 import SQL
 from flask import Flask, flash, redirect, render_template, request, session
 from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
+import numpy as np
 
-from helpers import apology, login_required, get_recommendations, MovieNotFoundError
+from helpers import apology, login_required, get_recommendations, MovieNotFoundError, get_movie_indices
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 import pandas as pd
@@ -179,13 +180,14 @@ def initialize_global_variables():
 
 initialize_global_variables()
 
+# TODO: ABLE TO DEAL WITH MULTIPLE MISSING FILMS
 @app.route("/recommendations", methods=["GET", "POST"])
 def recommendations():
 
     movie_input = request.form.get('movie')
     titles = [title.strip().lower().translate(str.maketrans('', '', string.punctuation)).replace(" ", "") for title in movie_input.split(',')]
 
-
+    indices = pd.Series(md.index, index=md['title'])
     try:
         recommended_movies_df, error_flag = get_recommendations(C, titles, md, cosine_sim, indices, m)
     except MovieNotFoundError as e:
@@ -207,3 +209,84 @@ def recommendations_id():
     
     recommended_movies_list = recommended_movies_df.to_dict('records')
     return render_template('index.html', recommended_movies=recommended_movies_list, error=error_flag)
+
+@app.route("/recommender")
+@login_required
+def recommender():
+    return render_template("index.html")
+
+
+@app.route("/library")
+@login_required
+def library():
+    reviews_list = db.execute("SELECT * FROM ratings WHERE user_id = ?", session["user_id"])
+    movie_ids = list(set(entry['movie_id'] for entry in reviews_list))
+
+    ratings = list(entry['rating'] for entry in reviews_list)
+    reviews_list = md[np.isin(md['imdb_id'], movie_ids)].to_dict('records')
+
+    movie_ratings = {entry['display_title']: rating for entry, rating in zip(reviews_list, ratings)}
+    return render_template("library.html", movie_ratings=movie_ratings)
+
+@app.route("/review", methods=["GET", "POST"])
+def review():
+    index_checker = pd.Series(md.index, index=md['title'])
+
+    movie_input = request.form.get('movieToReview')
+    rating_input = request.form.get('review')
+
+    movie_input = list(movie_input.strip().lower().translate(str.maketrans('', '', string.punctuation)).replace(" ", ""))
+    index_checker = pd.Series(md.index, index=md['title'])
+
+    idxs, error_flag, _ = get_movie_indices(movie_input, index_checker)
+    
+    if error_flag:
+        recommended_movies_list = md[md['title'].isin(movie_input)].to_dict('records')
+        return render_template('library.html', recommended_movies=recommended_movies_list, error=error_flag)
+
+    for idx in idxs:
+        imdb_id = md.iloc[idx]['imdb_id']
+
+        # Check if a review for this user and movie already exists
+        existing_review = db.execute("SELECT * FROM ratings WHERE user_id = ? AND movie_id = ?", session["user_id"], imdb_id)
+        
+        if len(existing_review) > 0:
+            # If review exists, update it
+            db.execute("UPDATE ratings SET rating = ? WHERE user_id = ? AND movie_id = ?", rating_input, session["user_id"], imdb_id)
+
+        else:
+            # If review doesn't exist, insert it
+            db.execute("INSERT INTO ratings (user_id, movie_id, rating) VALUES (?, ?, ?)", session["user_id"], imdb_id, rating_input)
+    return render_template("library.html")
+
+@app.route("/reviewid", methods=["GET", "POST"])
+def review_id():
+    index_checker = pd.Series(md.index, index=md['imdb_id'])
+
+    movie_input = request.form.get('movieToReview')
+    rating_input = request.form.get('review')
+
+    movie_input = list(movie_input.strip().lower().translate(str.maketrans('', '', string.punctuation)).replace(" ", ""))
+    index_checker = pd.Series(md.index, index=md['imdb_id'])
+
+    idxs, error_flag, index = get_movie_indices(movie_input, index_checker)
+
+    if error_flag:
+        recommended_movies_list = md[md['title'].isin(movie_input)].to_dict('records')
+        return render_template('library.html', recommended_movies=recommended_movies_list, error=error_flag)
+
+    for idx in idxs:
+        imdb_id = md.iloc[idx]['imdb_id']
+
+        # Check if a review for this user and movie already exists
+        existing_review = db.execute("SELECT * FROM ratings WHERE user_id = ? AND movie_id = ?", session["user_id"], imdb_id)
+        
+        if len(existing_review) > 0:
+            # If review exists, update it
+            db.execute("UPDATE ratings SET rating = ? WHERE user_id = ? AND movie_id = ?", rating_input, session["user_id"], imdb_id)
+
+        else:
+            # If review doesn't exist, insert it
+            db.execute("INSERT INTO ratings (user_id, movie_id, rating) VALUES (?, ?, ?)", session["user_id"], imdb_id, rating_input)
+    return render_template("library.html")
+    

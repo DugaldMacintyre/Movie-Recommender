@@ -1,0 +1,72 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Apology
+{% endblock %}
+
+{% block main %}
+<div class="container justify-content-center align-items-center">
+    <div class="row justify-content-center">
+        <div class="col-4">
+            
+        </div>
+        <div class="col-4">
+            <form action="{% if not error %} /review {% else %} /reviewid{% endif %}" method="post">
+
+                {% if not error %}
+                    <div class="input-group mb-3">
+                        <input autocomplete="off" autofocus class="form-control form-control-lg bg-light fs-6 mx-auto w-auto" id="movieToReview" name="movieToReview" placeholder="Movie Name" type="text" required>
+                    </div>
+                {% else %}
+                    <div class="input-group mb-3">
+                        <select id="inputState" class="form-select" id="movieToReview" name="movieToReview">
+                            <option selected>Choose...</option>
+                            {% for movie in recommended_movies %}
+                                <option value="{{ movie.imdb_id }}">{{movie.display_title}} - {{movie.release_date}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% endif %}
+            
+                <div class="input-group mb-3">
+                    <label for="customRange3" class="form-label">Review</label>
+                    <input type="range" default=2.5 class="form-range" min="0" max="5" step="0.1" id="review" name="review">    
+                </div>
+            
+                <div class="col-lg-4">
+                    <button class="btn btn-outline-primary btn-curved" type="submit">Submit</button>
+                </div>
+            </form>   
+        </div>
+        <div class="col-4">
+
+        </div>
+     
+    </div>
+
+    <!-- TODO: ADD STYLING FOR SMALLER SCREENS -->
+    <div class="row mt-4">
+        <div class="col-4">
+
+        </div>
+        <div class="col-4">
+        {% if movie_ratings %}
+            <ul class="list-group">
+                {% for movie_title, rating in movie_ratings.items() %}
+                    <li class="list-group-item">
+                        Movie Title: {{ movie_title }} - Rating: {{ rating }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        </div>
+        <div class="col-4">
+            
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+
+
