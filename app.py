@@ -215,7 +215,7 @@ def recommendations_id():
 def recommender():
     return render_template("index.html")
 
-
+# TODO: CHECK IF THIS IS WORKING
 @app.route("/library")
 @login_required
 def library():
