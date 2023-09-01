@@ -30,7 +30,7 @@ A data cleaning pipeline and write the new dataframe to a cv for use in the appl
 <a target="_blank" rel="noreferrer"> <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/jupyter/jupyter-original.svg" alt="pandas" width="40" height="40" /> </a>
 &nbsp; &nbsp;
 
-## [To-Dos <a name="todo"></a>
+## To-Dos <a name="todo"></a>
 * Able to deal with multiple missing films (use The Dark Knight and Heat as a test case).
 * Check if updating database with new review is working.
 * Fid nav to DEAL smaller screens
