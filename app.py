@@ -170,7 +170,9 @@ def initialize_global_variables():
     m = vote_counts.quantile(0.95)
     
     # Calculate the cosine similarity matrix
-    tf = TfidfVectorizer(analyzer='word', ngram_range=(1, 2), min_df=0, stop_words='english')
+    #tf = TfidfVectorizer(analyzer='word', ngram_range=(1, 2), min_df=0, stop_words='english')
+    tf = TfidfVectorizer(dtype=np.float32, analyzer='word', ngram_range=(1, 2), min_df=2, max_df=0.80, stop_words='english')
+
     tfidf_matrix = tf.fit_transform(md['soup'])
     cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
 
@@ -234,8 +236,7 @@ def review():
 
     movie_input = request.form.get('movieToReview')
     rating_input = request.form.get('review')
-
-    movie_input = list(movie_input.strip().lower().translate(str.maketrans('', '', string.punctuation)).replace(" ", ""))
+    movie_input = [movie_input.strip().lower().translate(str.maketrans('', '', string.punctuation)).replace(" ", "")]
     index_checker = pd.Series(md.index, index=md['title'])
 
     idxs, error_flag, _ = get_movie_indices(movie_input, index_checker)
