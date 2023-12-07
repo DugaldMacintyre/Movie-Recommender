@@ -52,7 +52,7 @@
         <div class="col-4">
         {% if movie_ratings %}
             <ul class="list-group">
-                {% for movie_title, rating in movie_ratings.items() %}
+                {% for movie_title, rating in movie_ratings %}
                     <li class="list-group-item">
                         Movie Title: {{ movie_title }} - Rating: {{ rating }}
                     </li>

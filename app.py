@@ -222,13 +222,10 @@ def recommender():
 @login_required
 def library():
     reviews_list = db.execute("SELECT * FROM ratings WHERE user_id = ?", session["user_id"])
-    movie_ids = list(set(entry['movie_id'] for entry in reviews_list))
-
-    ratings = list(entry['rating'] for entry in reviews_list)
-    reviews_list = md[np.isin(md['imdb_id'], movie_ids)].to_dict('records')
-
-    movie_ratings = {entry['display_title']: rating for entry, rating in zip(reviews_list, ratings)}
-    return render_template("library.html", movie_ratings=movie_ratings)
+    imdb_to_title = dict(zip(md['imdb_id'], md['original_title']))
+    title_rating_pairs = [(imdb_to_title[review['movie_id']], review['rating']) for review in reviews_list if review['movie_id'] in imdb_to_title]
+    
+    return render_template("library.html", movie_ratings=title_rating_pairs)
 
 @app.route("/review", methods=["GET", "POST"])
 def review():
